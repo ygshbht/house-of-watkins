@@ -1,1 +1,1 @@
-alert("Wepack works");
+alert("Webpack works");

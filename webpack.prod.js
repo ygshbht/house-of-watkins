@@ -1,7 +1,13 @@
+const webpack = require("webpack"); // only add this if you don't have yet
+
 const mode = "production";
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const express = require("express");
 const path = require("path");
+require("dotenv").config({ path: "./.env.production" });
+require("dotenv").config({ path: "./.env" });
+
+//maybe add subsequent .env.local, etc. files based on prcedense
 
 module.exports = {
 	// mode defaults to 'production' if not set
@@ -35,5 +41,10 @@ module.exports = {
 		extensions: [".ts", ".js", ".json"],
 	},
 
-	plugins: [new HtmlWebpackPlugin({ template: "./template.htm" })],
+	plugins: [
+		new HtmlWebpackPlugin({ template: "./template.htm" }),
+		new webpack.DefinePlugin({
+			"process.env": JSON.stringify(process.env),
+		}),
+	],
 };
