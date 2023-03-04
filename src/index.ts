@@ -17,10 +17,14 @@ function getTotalScrolledTop() {
 	return getCoords(CONTAINER).top;
 }
 
+function isDEV() {
+	return process.env.NODE_ENV === "development";
+}
+
 function onDev() {
 	document.body.style.height = (SCROLL_DISTANCE * 1.5).toString() + "px";
 }
-onDev();
+isDEV() && onDev();
 
 function onWatchedVideo() {
 	textData.forEach((item) => {
