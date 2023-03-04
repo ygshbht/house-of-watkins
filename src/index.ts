@@ -4,23 +4,34 @@ import "./styles.scss";
 
 import getCoords from "./getCoords";
 
-const CONTAINER =
-	(window as any).CONTAINER || document.querySelector("#container")!;
-const VIDEO_ELEM = CONTAINER.querySelector("video") as HTMLVideoElement | null;
+let CONTAINER =
+	((window as any).CONTAINER as HTMLDivElement) ||
+	(document.querySelector(
+		"#container-elem-house-of-watkins-random-name"
+	) as HTMLDivElement);
+
+const VIDEO_ELEM = CONTAINER?.querySelector("video") as HTMLVideoElement | null;
 const VIDEO_LENGTH = (window as any).VIDEO_LENGTH ?? 28.431995;
+
 const SCROLL_DISTANCE = (window as any).SCROLL_DISTANCE ?? 10000;
 
 const FONT_SIZE = 30;
 /** in seconds */
+const VIDEO_OFFSET_TOP = isDEV() ? 0 : 96;
 const OPACITY_DURATION = 0.5;
 
 function getTotalScrolledTop() {
-	return getCoords(CONTAINER).top;
+	if (isDEV()) {
+		return getCoords(CONTAINER!).top;
+	} else {
+		return Math.abs(CONTAINER.getBoundingClientRect().top);
+	}
 }
 
 function isDEV() {
 	return process.env.NODE_ENV === "development";
 }
+console.log("isDEV", isDEV());
 
 function onDev() {
 	document.body.style.height = (SCROLL_DISTANCE * 1.5).toString() + "px";
@@ -43,13 +54,22 @@ function onWatchedVideo() {
 }
 
 function onScroll() {
+	if (!CONTAINER) {
+		// CONTAINER = document.querySelector("canvas")
+		// 	?.parentElement as HTMLDivElement;
+		CONTAINER = document.querySelector("canvas")
+			?.parentElement as HTMLDivElement;
+		(window as any).CONTAINER = CONTAINER;
+	}
+	if (!CONTAINER) return;
 	let percentScrolled = getTotalScrolledTop() / SCROLL_DISTANCE;
 	const watchedDuration = VIDEO_LENGTH * percentScrolled;
 	if (VIDEO_ELEM) {
 		VIDEO_ELEM.currentTime = watchedDuration;
 	}
-
-	if (watchedDuration >= VIDEO_LENGTH) onWatchedVideo();
+	if (watchedDuration >= VIDEO_LENGTH) {
+		onWatchedVideo();
+	}
 
 	// updateTextContent(video.currentTime);
 	updateTextContent(watchedDuration);
@@ -64,7 +84,11 @@ function updateTextContent(currentTime: number) {
 
 		const textEndTime = textItem.time + textDuration;
 
-		if (currentVideoTime >= textItem.time && currentVideoTime <= textEndTime) {
+		if (
+			currentVideoTime >= textItem.time &&
+			currentVideoTime <= textEndTime &&
+			currentTime < VIDEO_LENGTH
+		) {
 			if (!textItem.elem) {
 				textItem.elem = createTextElem(textItem);
 				CONTAINER.appendChild(textItem.elem);
@@ -103,6 +127,8 @@ function getProportionalSize(num: number) {
 }
 
 function handleTextContentPositioningAndSizing() {
+	if (!CONTAINER) return;
+
 	function getCoords() {
 		return VIDEO_ELEM?.getBoundingClientRect();
 	}
@@ -125,7 +151,9 @@ function handleTextContentPositioningAndSizing() {
 				p.style.right = `${getProportionalSize(parseInt(textItem.right))}px`;
 			}
 			if (textItem.top) {
-				p.style.top = `${getProportionalSize(parseInt(textItem.top))}px`;
+				p.style.top = `${
+					getProportionalSize(parseInt(textItem.top)) + VIDEO_OFFSET_TOP
+				}px`;
 			}
 			// console.log(getCoords(p), textItem);
 		}
@@ -139,10 +167,11 @@ function createTextElem(textItem: ITextItem) {
 	p.style.opacity = "0";
 	p.style.fontSize = getProportionalSize(FONT_SIZE).toString() + "px";
 	p.style.fontWeight = "250px";
-	p.style.position = "absolute";
+	p.style.position = isDEV() ? "absolute" : "fixed";
 	// p.style.color = "red";
 	p.style.color = textItem.color;
 	p.style.zIndex = "9999";
+	p.style.lineHeight = "1.1";
 
 	// positioning is done outside
 
@@ -155,28 +184,44 @@ function createTextElem(textItem: ITextItem) {
 }
 
 function isDesktop() {
-	return window.innerWidth < 991;
+	return window.innerWidth > 990;
 }
 
-if (isHomePage()) {
-	let addedListeners = false;
-	if (isDesktop()) {
-		document.addEventListener("wheel", onScroll);
-		document.addEventListener("scroll", onScroll);
-		addedListeners = true;
+document.addEventListener("load", (e) => {
+	if (!CONTAINER) {
+		CONTAINER =
+			(document.querySelector("canvas")?.parentElement as HTMLDivElement) ||
+			((window as any).CONTAINER as HTMLDivElement) ||
+			(document.querySelector(
+				"#container-elem-house-of-watkins-random-name"
+			) as HTMLDivElement);
+		(window as any).CONTAINER = CONTAINER;
 	}
-
-	window.addEventListener("resize", () => {
+	onLoad();
+});
+onLoad();
+function onLoad() {
+	if (isHomePage()) {
+		let addedListeners = false;
 		if (isDesktop()) {
-			handleTextContentPositioningAndSizing();
-			if (!addedListeners) {
-				document.addEventListener("wheel", onScroll);
-				document.addEventListener("scroll", onScroll);
-			}
-		} else {
-			document.removeEventListener("wheel", onScroll);
-			document.removeEventListener("scroll", onScroll);
-			addedListeners = false;
+			document.addEventListener("wheel", onScroll);
+			document.addEventListener("scroll", onScroll);
+			addedListeners = true;
 		}
-	});
+
+		window.addEventListener("resize", () => {
+			if (isDesktop()) {
+				handleTextContentPositioningAndSizing();
+				if (!addedListeners) {
+					document.addEventListener("wheel", onScroll);
+					document.addEventListener("scroll", onScroll);
+				}
+			} else {
+				onWatchedVideo();
+				document.removeEventListener("wheel", onScroll);
+				document.removeEventListener("scroll", onScroll);
+				addedListeners = false;
+			}
+		});
+	}
 }
