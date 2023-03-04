@@ -1,23 +1,26 @@
 import { textData } from "./textData";
 import type { ITextItem } from "./textData";
 import "./styles.scss";
-const video = document.querySelector("video") as HTMLVideoElement;
 import getCoords from "./getCoords";
 
-const container = document.querySelector("#container")!;
+const CONTAINER =
+	(window as any).CONTAINER || document.querySelector("#container")!;
+const VIDEO_ELEM = CONTAINER.querySelector("video") as HTMLVideoElement | null;
+const VIDEO_LENGTH = (window as any).VIDEO_LENGTH ?? 28.431995;
+const SCROLL_DISTANCE = (window as any).SCROLL_DISTANCE ?? 10000;
 
 const FONT_SIZE = 30;
-const OPACITY_DURATION = 0.5;
-const SCROLL_DISTANCE = 10000;
-
 /** in seconds */
-const VIDEO_LENGTH = 28.431995;
+const OPACITY_DURATION = 0.5;
 
 function getTotalScrolledTop() {
-	return getCoords(video).top;
+	return getCoords(CONTAINER).top;
 }
 
-document.body.style.height = (SCROLL_DISTANCE * 1.5).toString() + "px";
+function onDev() {
+	document.body.style.height = (SCROLL_DISTANCE * 1.5).toString() + "px";
+}
+onDev();
 
 function onWatchedVideo() {
 	textData.forEach((item) => {
@@ -29,7 +32,9 @@ function onWatchedVideo() {
 function onScroll() {
 	let percentScrolled = getTotalScrolledTop() / SCROLL_DISTANCE;
 	const watchedDuration = VIDEO_LENGTH * percentScrolled;
-	video.currentTime = watchedDuration;
+	if (VIDEO_ELEM) {
+		VIDEO_ELEM.currentTime = watchedDuration;
+	}
 
 	if (watchedDuration >= VIDEO_LENGTH) onWatchedVideo();
 
@@ -40,22 +45,16 @@ function onScroll() {
 function updateTextContent(currentTime: number) {
 	// const currentVideoTime = video.currentTime;
 	const currentVideoTime = currentTime;
-	const textDuration = 3;
 
 	textData.forEach((textItem, index) => {
-		const textEndTime = textItem.time + textDuration;
+		const textDuration = textItem.duration ?? 3;
 
-		// if (index === 0) {
-		// 	console.log(
-		// 		currentVideoTime >= textItem.time,
-		// 		currentVideoTime <= textEndTime
-		// 	);
-		// }
+		const textEndTime = textItem.time + textDuration;
 
 		if (currentVideoTime >= textItem.time && currentVideoTime <= textEndTime) {
 			if (!textItem.elem) {
 				textItem.elem = createTextElem(textItem);
-				container.appendChild(textItem.elem);
+				CONTAINER.appendChild(textItem.elem);
 			}
 
 			const { elem } = textItem;
@@ -90,9 +89,13 @@ document.addEventListener("wheel", (e) => {
 	onScroll();
 	// video.currentTime += 0.1 * (Math.abs(e.deltaY) / e.deltaY);
 });
+document.addEventListener("scroll", (e) => {
+	onScroll();
+	// video.currentTime += 0.1 * (Math.abs(e.deltaY) / e.deltaY);
+});
 
 function getProportionalSize(num: number) {
-	return num * (video.offsetWidth / 1920);
+	return num * (CONTAINER.offsetWidth / 1920);
 }
 
 window.addEventListener("resize", () => {
@@ -101,7 +104,7 @@ window.addEventListener("resize", () => {
 
 function handleTextContentPositioningAndSizing() {
 	function getCoords() {
-		return video.getBoundingClientRect();
+		return VIDEO_ELEM?.getBoundingClientRect();
 	}
 
 	textData.forEach((textItem) => {
@@ -136,8 +139,9 @@ function createTextElem(textItem: ITextItem) {
 	p.style.opacity = "0";
 	p.style.fontSize = getProportionalSize(FONT_SIZE).toString() + "px";
 	p.style.fontWeight = "250px";
-	// p.style.position = "absolute";
-	p.style.color = "red";
+	p.style.position = "absolute";
+	// p.style.color = "red";
+	p.style.color = textItem.color;
 	p.style.zIndex = "9999";
 
 	// positioning is done outside

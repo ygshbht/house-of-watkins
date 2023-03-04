@@ -6,6 +6,7 @@ export interface ITextItem {
 	left?: string;
 	right?: string;
 	top?: string;
+	duration?: number;
 	centerX?: boolean;
 	elem?: HTMLParagraphElement;
 }
@@ -16,7 +17,8 @@ export const textData: ITextItem[] = [
         Award-Winning
         Designer David
         Watkins`,
-		time: 1.5,
+		time: 2.2,
+		duration: 4,
 		color: "black",
 		left: "642px",
 		top: "150px",
@@ -25,7 +27,9 @@ export const textData: ITextItem[] = [
 		text: `And Make Changes To
 		Your Plan in Real Time
 		`,
-		time: 3.5,
+		time: 4.2,
+		duration: 2,
+
 		color: "black",
 		left: "642px",
 		top: "300px",
@@ -33,7 +37,9 @@ export const textData: ITextItem[] = [
 	{
 		text: `You Will Need
 		A Site Plan`,
-		time: 6,
+		time: 6.2,
+		duration: 3.8,
+
 		color: "black",
 		left: "643px",
 		top: "204px",
@@ -41,6 +47,7 @@ export const textData: ITextItem[] = [
 	{
 		text: "We Can Provide It",
 		time: 8,
+		duration: 2,
 		color: "black",
 		left: "643px",
 		top: "312px",
@@ -49,6 +56,7 @@ export const textData: ITextItem[] = [
 		text: `You will need to Meet HOA Guidelines.
         We'll Make sure You Do`,
 		time: 10.75,
+		duration: 5,
 		color: "white",
 		left: "595px",
 		top: "436px",
@@ -59,6 +67,7 @@ export const textData: ITextItem[] = [
         Winning Designer
         David Watkins`,
 		time: 17,
+		duration: 3,
 		color: "white",
 		left: "545px",
 		top: "128px",
@@ -66,6 +75,7 @@ export const textData: ITextItem[] = [
 	{
 		text: `Value-Engineered To Save Money`,
 		time: 20,
+		duration: 4.5,
 		color: "black",
 		right: "200px",
 		top: "171px",
@@ -73,6 +83,7 @@ export const textData: ITextItem[] = [
 	{
 		text: `Energy Efficient To Keep Saving Money`,
 		time: 23,
+		duration: 1.5,
 		color: "black",
 		right: "200px",
 		top: "252px",
