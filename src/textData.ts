@@ -53,7 +53,7 @@ export const textData: ITextItem[] = [
 		top: "312px",
 	},
 	{
-		text: `You will need to Meet HOA Guidelines.
+		text: `You may need to Meet HOA Guidelines.
         We'll Make sure You Do`,
 		time: 10.75,
 		duration: 5,
