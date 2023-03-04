@@ -10,7 +10,7 @@ export interface ITextItem {
 	centerX?: boolean;
 	elem?: HTMLParagraphElement;
 }
-
+/** */
 export const textData: ITextItem[] = [
 	{
 		text: `Live-Chat With
@@ -88,25 +88,10 @@ export const textData: ITextItem[] = [
 		right: "200px",
 		top: "252px",
 	},
-	// {
-	// 	text: `Shop David's Most Popular Home Plans`,
-	// 	time: 26,
-	// 	color: "black",
-	// 	centerX: true,
-	// 	top: "200px",
-	// },
-	// {
-	// 	text: `& Schedule A Free Call Today`,
-	// 	time: 26.5,
-	// 	color: "black",
-	// 	centerX: true,
-	// 	top: "310px",
-	// },
 	{
 		text: `Shop David's Most Popular Home Plans`,
 		time: 25,
 		duration: 2.7,
-
 		color: "black",
 		centerX: true,
 		top: "200px",
