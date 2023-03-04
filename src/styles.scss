@@ -1,0 +1,26 @@
+* {
+	box-sizing: border-box;
+}
+body {
+	// overflow: hidden;
+	width: 100vw;
+	position: relative;
+}
+#container {
+	position: sticky;
+	top: 0px;
+	width: 100vw;
+	height: 100vh;
+	video {
+		display: block;
+
+		width: 100vw;
+		height: 100vh;
+		object-fit: contain;
+	}
+}
+
+p {
+	position: absolute;
+	background: white;
+}
