@@ -1,6 +1,7 @@
 import { textData } from "./textData";
 import type { ITextItem } from "./textData";
 import "./styles.scss";
+
 import getCoords from "./getCoords";
 
 const CONTAINER =
@@ -23,8 +24,16 @@ function isDEV() {
 
 function onDev() {
 	document.body.style.height = (SCROLL_DISTANCE * 1.5).toString() + "px";
+	document.body.style.position = "relative";
+	document.body.style.width = "100vw";
 }
 isDEV() && onDev();
+
+function isHomePage() {
+	const { pathname } = window.location;
+	const validPaths = ["", "/", "/index.html", "/index.php"];
+	return validPaths.includes(pathname);
+}
 
 function onWatchedVideo() {
 	textData.forEach((item) => {
@@ -89,22 +98,9 @@ function updateTextContent(currentTime: number) {
 // window.addEventListener("wheel", onScroll);
 // video.addEventListener("timeupdate", onScroll);
 
-document.addEventListener("wheel", (e) => {
-	onScroll();
-	// video.currentTime += 0.1 * (Math.abs(e.deltaY) / e.deltaY);
-});
-document.addEventListener("scroll", (e) => {
-	onScroll();
-	// video.currentTime += 0.1 * (Math.abs(e.deltaY) / e.deltaY);
-});
-
 function getProportionalSize(num: number) {
 	return num * (CONTAINER.offsetWidth / 1920);
 }
-
-window.addEventListener("resize", () => {
-	handleTextContentPositioningAndSizing();
-});
 
 function handleTextContentPositioningAndSizing() {
 	function getCoords() {
@@ -156,4 +152,31 @@ function createTextElem(textItem: ITextItem) {
 	}
 
 	return p;
+}
+
+function isDesktop() {
+	return window.innerWidth < 991;
+}
+
+if (isHomePage()) {
+	let addedListeners = false;
+	if (isDesktop()) {
+		document.addEventListener("wheel", onScroll);
+		document.addEventListener("scroll", onScroll);
+		addedListeners = true;
+	}
+
+	window.addEventListener("resize", () => {
+		if (isDesktop()) {
+			handleTextContentPositioningAndSizing();
+			if (!addedListeners) {
+				document.addEventListener("wheel", onScroll);
+				document.addEventListener("scroll", onScroll);
+			}
+		} else {
+			document.removeEventListener("wheel", onScroll);
+			document.removeEventListener("scroll", onScroll);
+			addedListeners = false;
+		}
+	});
 }
