@@ -1,37 +1,22 @@
 import { textData } from "./textData";
-import type { ITextItem } from "./textData";
 import "./styles.scss";
-
 import getCoords from "./getCoords";
+import { isDEV, isProd } from "./utils/getEnvironment";
+import isHomePage from "./utils/isHomePage";
+import isDesktop from "./utils/isDesktop";
+import createTextElem from "./utils/createTextElem";
+import { OPACITY_DURATION, SCROLL_DISTANCE, VIDEO_LENGTH } from "./constants";
+import { handleTextContentPositioningAndSizing } from "./utils/handleTextContentPositioningAndSizing";
 
-let CONTAINER =
-	((window as any).CONTAINER as HTMLDivElement) ||
-	(document.querySelector(
-		"#container-elem-house-of-watkins-random-name"
-	) as HTMLDivElement);
+let CONTAINER: HTMLDivElement | undefined;
 
-const VIDEO_ELEM = CONTAINER?.querySelector("video") as HTMLVideoElement | null;
-const VIDEO_LENGTH = (window as any).VIDEO_LENGTH ?? 28.431995;
-
-const SCROLL_DISTANCE = (window as any).SCROLL_DISTANCE ?? 10000;
-
-const FONT_SIZE = 30;
-/** in seconds */
-const VIDEO_OFFSET_TOP = isDEV() ? 0 : 96;
-const OPACITY_DURATION = 0.5;
-
-function getTotalScrolledTop() {
+function getTotalScrolledTop(CONTAINER: HTMLDivElement) {
 	if (isDEV()) {
-		return getCoords(CONTAINER!).top;
+		return getCoords(CONTAINER).top;
 	} else {
 		return Math.abs(CONTAINER.getBoundingClientRect().top);
 	}
 }
-
-function isDEV() {
-	return process.env.NODE_ENV === "development";
-}
-console.log("isDEV", isDEV());
 
 function onDev() {
 	document.body.style.height = (SCROLL_DISTANCE * 1.5).toString() + "px";
@@ -40,12 +25,6 @@ function onDev() {
 }
 isDEV() && onDev();
 
-function isHomePage() {
-	const { pathname } = window.location;
-	const validPaths = ["", "/", "/index.html", "/index.php"];
-	return validPaths.includes(pathname);
-}
-
 function onWatchedVideo() {
 	textData.forEach((item) => {
 		item.elem?.remove();
@@ -53,17 +32,31 @@ function onWatchedVideo() {
 	});
 }
 
+function trySettingContainer() {
+	if (!CONTAINER) {
+		if (isDEV()) {
+			document.querySelector(
+				"#container-elem-house-of-watkins-random-name"
+			) as HTMLDivElement;
+		} else if (isProd()) {
+			CONTAINER = document.querySelector("canvas")
+				?.parentElement as HTMLDivElement;
+		}
+	}
+}
+
 function onScroll() {
 	if (!CONTAINER) {
-		// CONTAINER = document.querySelector("canvas")
-		// 	?.parentElement as HTMLDivElement;
-		CONTAINER = document.querySelector("canvas")
-			?.parentElement as HTMLDivElement;
-		(window as any).CONTAINER = CONTAINER;
+		trySettingContainer();
 	}
 	if (!CONTAINER) return;
-	let percentScrolled = getTotalScrolledTop() / SCROLL_DISTANCE;
+	let percentScrolled = getTotalScrolledTop(CONTAINER) / SCROLL_DISTANCE;
 	const watchedDuration = VIDEO_LENGTH * percentScrolled;
+
+	const VIDEO_ELEM = CONTAINER?.querySelector(
+		"video"
+	) as HTMLVideoElement | null;
+
 	if (VIDEO_ELEM) {
 		VIDEO_ELEM.currentTime = watchedDuration;
 	}
@@ -77,6 +70,8 @@ function onScroll() {
 
 function updateTextContent(currentTime: number) {
 	// const currentVideoTime = video.currentTime;
+	if (!CONTAINER) return;
+
 	const currentVideoTime = currentTime;
 
 	textData.forEach((textItem, index) => {
@@ -90,8 +85,8 @@ function updateTextContent(currentTime: number) {
 			currentTime < VIDEO_LENGTH
 		) {
 			if (!textItem.elem) {
-				textItem.elem = createTextElem(textItem);
-				CONTAINER.appendChild(textItem.elem);
+				textItem.elem = createTextElem(textItem, CONTAINER!);
+				CONTAINER!.appendChild(textItem.elem);
 			}
 
 			const { elem } = textItem;
@@ -115,91 +110,17 @@ function updateTextContent(currentTime: number) {
 			textItem.elem?.remove();
 			delete textItem.elem;
 		}
-		handleTextContentPositioningAndSizing();
+		handleTextContentPositioningAndSizing(CONTAINER!);
 	});
-}
-// video.onclick = () => console.log(video.currentTime);
-// window.addEventListener("wheel", onScroll);
-// video.addEventListener("timeupdate", onScroll);
-
-function getProportionalSize(num: number) {
-	return num * (CONTAINER.offsetWidth / 1920);
-}
-
-function handleTextContentPositioningAndSizing() {
-	if (!CONTAINER) return;
-
-	function getCoords() {
-		return VIDEO_ELEM?.getBoundingClientRect();
-	}
-
-	textData.forEach((textItem) => {
-		const { elem } = textItem;
-		if (elem) {
-			const p = elem;
-
-			elem.style.fontSize = getProportionalSize(FONT_SIZE).toString() + "px";
-
-			if (textItem.left) {
-				/** for future ref in case of fixed positining */
-				// p.style.left = `${
-				// 	getCoords().left + getProportionalSize(parseInt(textItem.left))
-				// }px`;
-				p.style.left = `${getProportionalSize(parseInt(textItem.left))}px`;
-			}
-			if (textItem.right) {
-				p.style.right = `${getProportionalSize(parseInt(textItem.right))}px`;
-			}
-			if (textItem.top) {
-				p.style.top = `${
-					getProportionalSize(parseInt(textItem.top)) + VIDEO_OFFSET_TOP
-				}px`;
-			}
-			// console.log(getCoords(p), textItem);
-		}
-	});
-}
-
-function createTextElem(textItem: ITextItem) {
-	const p = document.createElement("p");
-	p.innerText = textItem.text;
-	p.style.color = textItem.color;
-	p.style.opacity = "0";
-	p.style.fontSize = getProportionalSize(FONT_SIZE).toString() + "px";
-	p.style.fontWeight = "250px";
-	p.style.position = isDEV() ? "absolute" : "fixed";
-	// p.style.color = "red";
-	p.style.color = textItem.color;
-	p.style.zIndex = "9999";
-	p.style.lineHeight = "1.1";
-
-	// positioning is done outside
-
-	if (textItem.centerX) {
-		p.style.left = "50%";
-		p.style.transform = "translateX(-50%)";
-	}
-
-	return p;
-}
-
-function isDesktop() {
-	return window.innerWidth > 990;
 }
 
 document.addEventListener("load", (e) => {
-	if (!CONTAINER) {
-		CONTAINER =
-			(document.querySelector("canvas")?.parentElement as HTMLDivElement) ||
-			((window as any).CONTAINER as HTMLDivElement) ||
-			(document.querySelector(
-				"#container-elem-house-of-watkins-random-name"
-			) as HTMLDivElement);
-		(window as any).CONTAINER = CONTAINER;
-	}
+	trySettingContainer();
 	onLoad();
 });
+trySettingContainer();
 onLoad();
+
 function onLoad() {
 	if (isHomePage()) {
 		let addedListeners = false;
@@ -211,10 +132,11 @@ function onLoad() {
 
 		window.addEventListener("resize", () => {
 			if (isDesktop()) {
-				handleTextContentPositioningAndSizing();
+				CONTAINER && handleTextContentPositioningAndSizing(CONTAINER);
 				if (!addedListeners) {
 					document.addEventListener("wheel", onScroll);
 					document.addEventListener("scroll", onScroll);
+					addedListeners = true;
 				}
 			} else {
 				onWatchedVideo();
